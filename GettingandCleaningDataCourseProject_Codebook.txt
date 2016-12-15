@@ -1,0 +1,4 @@
+Codebook - Getting and Cleaning Data Course Project
+New Variables
+data is merged test and train data
+all measurements are now means
