@@ -1,1 +1,96 @@
 # Getting-and-Cleaning-Data-Course-Project
+GettinandCleaningDataCourseProject
+
+GitHub Documents
+
+This is an R Markdown format used for publishing markdown documents to GitHub. When you click the Knit button all R code chunks are run and a markdown file (.md) suitable for publishing to GitHub is generated.
+
+Including Code
+
+You can include R code in the document as follows:
+
+Create one R script called run_analysis.R that does the following:
+
+1. Merges the training and the test sets to create one data set.
+
+2. Extracts only the measurements on the mean and standard deviation for each measurement.
+
+3. Uses descriptive activity names to name the activities in the data set
+
+4. Appropriately labels the data set with descriptive activity names.
+
+5. Creates a second, independent tidy data set with the average of each variable for each activity and each subject.
+
+if (!require("data.table")) { install.packages("data.table") }
+
+if (!require("reshape2")) { install.packages("reshape2") }
+
+require("data.table") require("reshape2")
+
+1. Merges the training and the test sets to create one data set.
+
+read activity labels
+
+activity_labels <- read.table("activity_labels.txt")[, 2]
+
+read column names
+
+features <- read.table('features.txt')[, 2]
+
+remove parentheses in column names
+
+features <- gsub('[()]', '', features)
+
+read test data
+
+test_x <- read.table('test/X_test.txt') test_y <- read.table('test/y_test.txt') test_subject <- read.table("test/subject_test.txt")
+
+read train data
+
+train_x <- read.table('train/X_train.txt') train_y <- read.table('train/y_train.txt') train_subject <- read.table("train/subject_train.txt")
+
+names(test_x) <- features names(train_x) <- features
+
+filter only column names with "-mean" or "-std" suffix
+
+extract_features <- grepl("-mean|-std", features)
+
+subset data on those column names
+
+test_x <- test_x[, features[extract_features]] train_x <- train_x[, features[extract_features]]
+
+map activity labels into column next to of activity IDs
+
+test_y[, 2] <- activity_labels[test_y[, 1]] train_y[, 2] <- activity_labels[train_y[, 1]]
+
+names(test_y) <- c("activity_id", "activity_label") names(train_y) <- c("activity_id", "activity_label")
+
+names(test_subject) <- "subject" names(train_subject) <- "subject"
+
+put "subject" into 1st column, and Y into 2nd column of our dataset
+
+test_data <- cbind(as.data.table(test_subject), test_y, test_x) train_data <- cbind(as.data.table(train_subject), train_y, train_x)
+
+merge test and train data
+
+data <- rbind(test_data, train_data)
+
+define what columns will be ID and what contain variables
+
+id_labels <- c("subject", "activity_id", "activity_label") data_labels <- setdiff(colnames(data), id_labels)
+
+melt data
+
+melt_data <- melt(data, id = id_labels, measure.vars = data_labels)
+
+Apply mean function to dataset using dcast function.
+
+tidy_data = dcast(melt_data, subject + activity_label ~ variable, mean)
+
+head(tidy_data)
+
+Store in plain text file.
+
+write.table(tidy_data, file = "tidy_data.txt")
+
+Note that the echo = FALSE parameter was added to the code chunk to prevent printing of the R code that generated the plot.
